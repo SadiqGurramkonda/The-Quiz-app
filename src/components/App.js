@@ -8,7 +8,10 @@ import Question from './Question';
 import NextButton from './NextButton'
 import Progress from './Progress';
 import FinishScreen from './FinishScreen';
+import Footer from './Footer';
+import Timer from './Timer';
 
+const SECS_PER_QUESTION = 30;
 const initialState = {
   questions: [],
 
@@ -16,7 +19,9 @@ const initialState = {
   status: "loading",
   currIndex: 0,
   answer: null,
-  points: 0
+  points: 0,
+  highScore: 0,
+  secondsRemaining: null
 };
 function reducer(state,action){
 
@@ -26,7 +31,7 @@ function reducer(state,action){
     case "dataFailed":
       return {...state,status:"error"};
     case "start":
-      return {...state,status:"active"};
+      return {...state,status:"active",secondsRemaining:state.questions.length * SECS_PER_QUESTION };
     case "newAnswer":
       const question  = state.questions.at(state.currIndex);
 
@@ -37,7 +42,15 @@ function reducer(state,action){
     case "nextQuestion":
       return {...state,currIndex: state.currIndex+1,answer:null};
     case "finish":
-      return {...state,status:"finished"}
+      return {...state,status:"finished",highScore:state.points>state.highScore?state.points:state.highScore};
+    case "restart":
+      return {...initialState,status:"ready",questions:state.questions};
+    case "tick":
+      return {
+        ...state,
+        secondsRemaining : state.secondsRemaining -1 ,
+        status: state.secondsRemaining === 0 ? 'finished' : state.status}
+
     default:
       throw new Error("unknown action");
   }
@@ -45,7 +58,7 @@ function reducer(state,action){
 
 function App() {
 
-  const [{questions,status,currIndex,answer,points},dispatch] = useReducer(reducer,initialState);
+  const [{questions,status,currIndex,answer,points,highScore,secondsRemaining},dispatch] = useReducer(reducer,initialState);
   const numQuestions = questions.length;
   const totalPoints = questions.reduce((prev, curr)=>prev + curr.points,0);
   console.log(totalPoints);
@@ -57,7 +70,7 @@ function App() {
     .catch((err)=>{
       dispatch({type:"dataFailed"})
     });
-  },[])
+  },[]);
   return (
     <div className="app">
       <Header />
@@ -84,12 +97,15 @@ function App() {
               dispatch={dispatch}
               answer={answer}
             ></Question>
-            <NextButton dispatch={dispatch} answer={answer} index={currIndex} numQuestions={numQuestions}></NextButton>
+            <Footer>
+              <Timer dispatch={dispatch} secondsRemaining={secondsRemaining}></Timer>
+              <NextButton dispatch={dispatch} answer={answer} index={currIndex} numQuestions={numQuestions}></NextButton>
+            </Footer>
           </>
         )}
         {
           status === "finished" && (
-            <FinishScreen points={points} totalPoints={totalPoints} />
+            <FinishScreen points={points} totalPoints={totalPoints} highScore={highScore} dispatch={dispatch}/>
           )
         }
       </Main>
