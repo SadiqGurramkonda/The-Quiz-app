@@ -1,5 +1,4 @@
 export default function Question({question,dispatch,answer}){
-    console.log(question)
 
     const hasAnswered = answer !== null
 

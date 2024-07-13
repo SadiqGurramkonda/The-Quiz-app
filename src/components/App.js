@@ -61,7 +61,6 @@ function App() {
   const [{questions,status,currIndex,answer,points,highScore,secondsRemaining},dispatch] = useReducer(reducer,initialState);
   const numQuestions = questions.length;
   const totalPoints = questions.reduce((prev, curr)=>prev + curr.points,0);
-  console.log(totalPoints);
  
 
   useEffect(function(){
